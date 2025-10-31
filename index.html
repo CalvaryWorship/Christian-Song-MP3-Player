@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Christian Song MP3 Player</title>
+<style>
+:root{--bg:#0b1220;--card:#0f1724;--accent:#f6c85f;--muted:#9aa4b2;--glass: rgba(255,255,255,0.03)}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,#031022 0%,#071428 100%);color:#e6eef6}
+.app{min-height:100vh;display:flex;flex-direction:column;padding:0 14px}
+.header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;padding-top:20px}
+.search{flex:1;max-width:540px}
+.search input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+.player-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:18px;border-radius:14px;box-shadow:0 8px 24px rgba(2,6,23,0.6)}
+.now{display:flex;gap:14px;align-items:center}
+.cover{width:96px;height:96px;border-radius:10px;background:linear-gradient(135deg,#1f2937,#0b1220);display:flex;align-items:center;justify-content:center;font-size:42px}
+.meta{flex:1}
+.meta h2{margin:0 0 6px 0}
+.meta p{margin:0;color:var(--muted)}
+.controls{display:flex;align-items:center;gap:10px;margin-top:12px}
+.btn{padding:8px 12px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.04);cursor:pointer}
+.btn.play{padding:10px 14px}
+.progress{display:flex;align-items:center;gap:12px;margin-top:12px}
+.progress input[type=range]{flex:1}
+.time{min-width:56px;text-align:center;color:var(--muted)}
+.list{margin-top:18px;display:grid;gap:8px}
+.song{display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.01)}
+.song:hover{background:rgba(255,255,255,0.02)}
+.song .idx{width:28px;text-align:center;color:var(--muted)}
+.song .title{flex:1}
+.song button{margin-left:6px}
+footer{margin-top:20px;color:var(--muted);font-size:13px;text-align:center}
+</style>
+</head>
+<body>
+<div class="app">
+<div class="header">
+<div class="search"><input id="search" placeholder="Search songs by title or singer..." /></div>
+<div style="display:flex;gap:8px">
+<button class="btn" id="shuffle">Shuffle</button>
+<button class="btn" id="downloadAll">Download All</button>
+</div>
+</div>
+<section class="player-card">
+<div class="now">
+<div class="cover" id="cover">🎵</div>
+<div class="meta">
+<h2 id="nowTitle">Select a song to play</h2>
+<p id="nowArtist">Calvary Worship</p>
+<div class="controls">
+<button class="btn" id="prev">Prev</button>
+<button class="btn play" id="play">Play</button>
+<button class="btn" id="next">Next</button>
+<label style="margin-left:10px;color:var(--muted)">Vol</label>
+<input id="volume" type="range" min="0" max="1" step="0.01" style="width:110px" />
+</div>
+<div class="progress">
+<div class="time" id="curTime">0:00</div>
+<input id="seek" type="range" min="0" max="100" value="0" />
+<div class="time" id="dur">0:00</div>
+</div>
+</div>
+</div>
+<div class="list" id="songs"></div>
+<footer>Put your mp3 files inside <code>assets/</code> folder.</footer>
+</section>
+</div>
+<audio id="audio" preload="metadata"></audio>
+<script>
+const SONGS=[
+{id:1,title:"Amazing Grace (Sample)",artist:"Calvary Choir",src:"assets/amazing-grace.mp3",cover:"assets/cover1.jpg"},
+{id:2,title:"How Great Thou Art (Sample)",artist:"Worship Team",src:"assets/how-great-thou-art.mp3",cover:"assets/cover2.jpg"},
+{id:3,title:"Blessed Assurance (Sample)",artist:"Calvary Choir",src:"assets/blessed-assurance.mp3",cover:"assets/cover3.jpg"}
+];
+const songsEl=document.getElementById('songs'),audio=document.getElementById('audio'),
+nowTitle=document.getElementById('nowTitle'),nowArtist=document.getElementById('nowArtist'),
+cover=document.getElementById('cover'),playBtn=document.getElementById('play'),
+prevBtn=document.getElementById('prev'),nextBtn=document.getElementById('next'),
+seek=document.getElementById('seek'),curTime=document.getElementById('curTime'),
+dur=document.getElementById('dur'),volume=document.getElementById('volume'),
+search=document.getElementById('search'),shuffleBtn=document.getElementById('shuffle'),
+downloadAll=document.getElementById('downloadAll');
+let currentIndex=-1,filtered=SONGS.slice();
+function secsToTime(s){s=Math.floor(s||0);return`${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;}
+function renderList(list){songsEl.innerHTML='';list.forEach((song,i)=>{const el=document.createElement('div');el.className='song';el.innerHTML=`<div class="idx">${i+1}</div><div class="title"><div style="font-weight:600">${song.title}</div><div style="font-size:13px;color:var(--muted)">${song.artist}</div></div><div><button class="btn" onclick="playById(${song.id})">Play</button><a class="btn" href="${song.src}" download>Download</a></div>`;songsEl.appendChild(el);});}
+function loadSongByIndex(i){const s=filtered[i];audio.src=s.src;nowTitle.textContent=s.title;nowArtist.textContent=s.artist;cover.style.backgroundImage=`url(${s.cover})`;cover.textContent='';currentIndex=i;}
+function playById(id){const i=filtered.findIndex(x=>x.id===id);loadSongByIndex(i);audio.play();}
+window.playById=playById;
+playBtn.onclick=()=>{if(!audio.src&&filtered.length)loadSongByIndex(0);audio.paused?audio.play():audio.pause()};
+prevBtn.onclick=()=>{currentIndex>0?loadSongByIndex(currentIndex-1):loadSongByIndex(filtered.length-1);audio.play()};
+nextBtn.onclick=()=>{currentIndex<filtered.length-1?loadSongByIndex(currentIndex+1):loadSongByIndex(0);audio.play()};
+audio.onplay=()=>playBtn.textContent='Pause';audio.onpause=()=>playBtn.textContent='Play';
+audio.ontimeupdate=()=>{if(audio.duration){seek.max=Math.floor(audio.duration);seek.value=Math.floor(audio.currentTime);curTime.textContent=secsToTime(audio.currentTime);dur.textContent=secsToTime(audio.duration);}};
+audio.onended=()=>nextBtn.click();
+seek.oninput=()=>audio.currentTime=seek.value;volume.oninput=()=>audio.volume=volume.value;
+search.oninput=()=>{const q=search.value.toLowerCase();filtered=SONGS.filter(s=>s.title.toLowerCase().includes(q)||s.artist.toLowerCase().includes(q));renderList(filtered)};
+shuffleBtn.onclick=()=>{for(let i=filtered.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[filtered[i],filtered[j]]=[filtered[j],filtered[i]]}renderList(filtered)};
+downloadAll.onclick=()=>filtered.forEach(s=>{const a=document.createElement('a');a.href=s.src;a.download='';a.click()});
+volume.value=0.9;audio.volume=0.9;renderList(filtered);
+</script>
+</body>
+</html>
