@@ -3,101 +3,395 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Christian Song MP3 Player</title>
+<title>Christian Song MP3 Player — Playlists</title>
 <style>
-:root{--bg:#0b1220;--card:#0f1724;--accent:#f6c85f;--muted:#9aa4b2;--glass: rgba(255,255,255,0.03)}
+:root{
+  --bg:#0b1220;
+  --card:#0f1724;
+  --accent:#f6c85f;
+  --muted:#9aa4b2;
+  --glass: rgba(255,255,255,0.03);
+}
 *{box-sizing:border-box}
-body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;background:linear-gradient(180deg,#031022 0%,#071428 100%);color:#e6eef6}
-.app{min-height:100vh;display:flex;flex-direction:column;padding:0 14px}
-.header{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;padding-top:20px}
-.search{flex:1;max-width:540px}
+body{
+  margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
+  background:linear-gradient(180deg,#031022 0%,#071428 100%);color:#e6eef6;
+}
+.app{min-height:100vh;display:flex;gap:18px;padding:18px}
+.sidebar{width:260px;flex-shrink:0}
+.main{flex:1;min-width:320px}
+.card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:14px;border-radius:12px;box-shadow:0 8px 24px rgba(2,6,23,0.6)}
+.header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.search{flex:1}
 .search input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
-.player-card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:18px;border-radius:14px;box-shadow:0 8px 24px rgba(2,6,23,0.6)}
-.now{display:flex;gap:14px;align-items:center}
-.cover{width:96px;height:96px;border-radius:10px;background:linear-gradient(135deg,#1f2937,#0b1220);display:flex;align-items:center;justify-content:center;font-size:42px}
-.meta{flex:1}
-.meta h2{margin:0 0 6px 0}
-.meta p{margin:0;color:var(--muted)}
-.controls{display:flex;align-items:center;gap:10px;margin-top:12px}
-.btn{padding:8px 12px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.04);cursor:pointer}
-.btn.play{padding:10px 14px}
+.controls{display:flex;gap:8px;align-items:center}
+.btn{padding:8px 10px;border-radius:10px;background:transparent;border:1px solid rgba(255,255,255,0.04);cursor:pointer;color:#fff}
+.small{padding:6px 8px;font-size:13px}
+.player{display:flex;gap:14px;align-items:center;margin-bottom:12px}
+.cover{width:84px;height:84px;border-radius:10px;background:linear-gradient(135deg,#1f2937,#0b1220);display:flex;align-items:center;justify-content:center;font-size:36px}
+.meta h2{margin:0 0 6px 0;font-size:18px}
+.meta p{margin:0;color:var(--muted);font-size:13px}
+.controls-row{display:flex;align-items:center;gap:10px;margin-top:10px}
 .progress{display:flex;align-items:center;gap:12px;margin-top:12px}
 .progress input[type=range]{flex:1}
-.time{min-width:56px;text-align:center;color:var(--muted)}
-.list{margin-top:18px;display:grid;gap:8px}
+.time{min-width:56px;text-align:center;color:var(--muted);font-size:13px}
+.list{margin-top:12px;display:grid;gap:8px}
 .song{display:flex;align-items:center;gap:12px;padding:10px;border-radius:10px;background:rgba(255,255,255,0.01)}
 .song:hover{background:rgba(255,255,255,0.02)}
 .song .idx{width:28px;text-align:center;color:var(--muted)}
 .song .title{flex:1}
-.song button{margin-left:6px}
-footer{margin-top:20px;color:var(--muted);font-size:13px;text-align:center}
+.song .actions{display:flex;gap:6px}
+.playlist-item{display:flex;align-items:center;justify-content:space-between;padding:8px;border-radius:8px;margin-bottom:6px;background:rgba(255,255,255,0.01)}
+.playlist-item .meta{flex:1;margin-left:8px}
+.caption{color:var(--muted);font-size:13px;margin-top:8px}
+.footer{margin-top:12px;color:var(--muted);font-size:13px;text-align:center}
+.input{width:100%;padding:8px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit}
+.badge{background:rgba(246,200,95,0.12);padding:4px 8px;border-radius:999px;font-size:12px;color:var(--accent)}
+.empty{color:var(--muted);font-size:13px;text-align:center;padding:12px}
 </style>
 </head>
 <body>
 <div class="app">
-<div class="header">
-<div class="search"><input id="search" placeholder="Search songs by title or singer..." /></div>
-<div style="display:flex;gap:8px">
-<button class="btn" id="shuffle">Shuffle</button>
-<button class="btn" id="downloadAll">Download All</button>
+  <aside class="sidebar">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+        <strong>Playlists</strong>
+        <button class="btn small" id="newPlaylistBtn">+ New</button>
+      </div>
+
+      <div id="playlistsContainer"></div>
+
+      <div class="caption">Click a playlist to view songs. Use Play to play entire list.</div>
+    </div>
+    <div style="height:12px"></div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <strong>Now Playing</strong>
+        <span id="nowCount" class="badge">0</span>
+      </div>
+      <div style="height:8px"></div>
+      <div id="nowListPreview" class="caption empty">No song queued</div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="card">
+      <div class="header">
+        <div class="search">
+          <input id="search" placeholder="Search songs by title or singer..." />
+        </div>
+        <div class="controls">
+          <button class="btn" id="shuffle">Shuffle</button>
+          <button class="btn" id="downloadAll">Download All</button>
+        </div>
+      </div>
+
+      <div class="player">
+        <div class="cover" id="cover">🎵</div>
+        <div class="meta">
+          <h2 id="nowTitle">Select a song to play</h2>
+          <p id="nowArtist">Calvary Worship</p>
+          <div class="controls-row">
+            <button class="btn" id="prev">Prev</button>
+            <button class="btn play" id="play">Play</button>
+            <button class="btn" id="next">Next</button>
+            <label style="margin-left:8px;color:var(--muted)">Vol</label>
+            <input id="volume" type="range" min="0" max="1" step="0.01" style="width:110px" />
+          </div>
+        </div>
+      </div>
+
+      <div class="progress">
+        <div class="time" id="curTime">0:00</div>
+        <input id="seek" type="range" min="0" max="100" value="0" />
+        <div class="time" id="dur">0:00</div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+        <button class="btn small" id="selectAllBtn">Select All</button>
+        <button class="btn small" id="createPlaylistFromSelected">Create playlist from selected</button>
+        <input id="newPlaylistName" class="input" placeholder="Enter playlist name (for quick create)" style="max-width:320px"/>
+      </div>
+
+      <div class="list" id="songs" style="margin-top:14px"></div>
+
+      <div class="footer">Put your mp3 files inside <code>assets/</code> folder.</div>
+    </div>
+  </main>
 </div>
-</div>
-<section class="player-card">
-<div class="now">
-<div class="cover" id="cover">🎵</div>
-<div class="meta">
-<h2 id="nowTitle">Select a song to play</h2>
-<p id="nowArtist">Calvary Worship</p>
-<div class="controls">
-<button class="btn" id="prev">Prev</button>
-<button class="btn play" id="play">Play</button>
-<button class="btn" id="next">Next</button>
-<label style="margin-left:10px;color:var(--muted)">Vol</label>
-<input id="volume" type="range" min="0" max="1" step="0.01" style="width:110px" />
-</div>
-<div class="progress">
-<div class="time" id="curTime">0:00</div>
-<input id="seek" type="range" min="0" max="100" value="0" />
-<div class="time" id="dur">0:00</div>
-</div>
-</div>
-</div>
-<div class="list" id="songs"></div>
-<footer>Put your mp3 files inside <code>assets/</code> folder.</footer>
-</section>
-</div>
+
 <audio id="audio" preload="metadata"></audio>
+
 <script>
+/* --- Sample songs (replace with your real files) --- */
 const SONGS=[
-{id:1,title:"Binti meri tujse hai parbhuj",artist:"Calvary Choir",src:"assets/Binti meri tujse hai parbhuj.mp3",cover:"assets/cover1.jpg"},
-{id:2,title:"Jal Ke Liye Hafti Hirni Jaise ",artist:"Worship Team",src:"assets/Jal Ke Liye Hafti Hirni Jaise .mp3",cover:"assets/cover2.jpg"},
-{id:3,title:"Blessed Assurance (Sample)",artist:"Calvary Choir",src:"assets/blessed-assurance.mp3",cover:"assets/cover3.jpg"}
+  {id:1,title:"Binti meri tujse hai parbhuj",artist:"Calvary Choir",src:"assets/Binti meri tujse hai parbhuj.mp3",cover:"assets/cover1.jpg"},
+  {id:2,title:"Jal Ke Liye Hafti Hirni Jaise",artist:"Worship Team",src:"assets/Jal Ke Liye Hafti Hirni Jaise .mp3",cover:"assets/cover2.jpg"},
+  {id:3,title:"Blessed Assurance (Sample)",artist:"Calvary Choir",src:"assets/blessed-assurance.mp3",cover:"assets/cover3.jpg"}
 ];
-const songsEl=document.getElementById('songs'),audio=document.getElementById('audio'),
-nowTitle=document.getElementById('nowTitle'),nowArtist=document.getElementById('nowArtist'),
-cover=document.getElementById('cover'),playBtn=document.getElementById('play'),
-prevBtn=document.getElementById('prev'),nextBtn=document.getElementById('next'),
-seek=document.getElementById('seek'),curTime=document.getElementById('curTime'),
-dur=document.getElementById('dur'),volume=document.getElementById('volume'),
-search=document.getElementById('search'),shuffleBtn=document.getElementById('shuffle'),
-downloadAll=document.getElementById('downloadAll');
-let currentIndex=-1,filtered=SONGS.slice();
-function secsToTime(s){s=Math.floor(s||0);return`${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`;}
-function renderList(list){songsEl.innerHTML='';list.forEach((song,i)=>{const el=document.createElement('div');el.className='song';el.innerHTML=`<div class="idx">${i+1}</div><div class="title"><div style="font-weight:600">${song.title}</div><div style="font-size:13px;color:var(--muted)">${song.artist}</div></div><div><button class="btn" onclick="playById(${song.id})">Play</button><a class="btn" href="${song.src}" download>Download</a></div>`;songsEl.appendChild(el);});}
-function loadSongByIndex(i){const s=filtered[i];audio.src=s.src;nowTitle.textContent=s.title;nowArtist.textContent=s.artist;cover.style.backgroundImage=`url(${s.cover})`;cover.textContent='';currentIndex=i;}
-function playById(id){const i=filtered.findIndex(x=>x.id===id);loadSongByIndex(i);audio.play();}
-window.playById=playById;
-playBtn.onclick=()=>{if(!audio.src&&filtered.length)loadSongByIndex(0);audio.paused?audio.play():audio.pause()};
-prevBtn.onclick=()=>{currentIndex>0?loadSongByIndex(currentIndex-1):loadSongByIndex(filtered.length-1);audio.play()};
-nextBtn.onclick=()=>{currentIndex<filtered.length-1?loadSongByIndex(currentIndex+1):loadSongByIndex(0);audio.play()};
-audio.onplay=()=>playBtn.textContent='Pause';audio.onpause=()=>playBtn.textContent='Play';
-audio.ontimeupdate=()=>{if(audio.duration){seek.max=Math.floor(audio.duration);seek.value=Math.floor(audio.currentTime);curTime.textContent=secsToTime(audio.currentTime);dur.textContent=secsToTime(audio.duration);}};
-audio.onended=()=>nextBtn.click();
-seek.oninput=()=>audio.currentTime=seek.value;volume.oninput=()=>audio.volume=volume.value;
-search.oninput=()=>{const q=search.value.toLowerCase();filtered=SONGS.filter(s=>s.title.toLowerCase().includes(q)||s.artist.toLowerCase().includes(q));renderList(filtered)};
-shuffleBtn.onclick=()=>{for(let i=filtered.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[filtered[i],filtered[j]]=[filtered[j],filtered[i]]}renderList(filtered)};
-downloadAll.onclick=()=>filtered.forEach(s=>{const a=document.createElement('a');a.href=s.src;a.download='';a.click()});
-volume.value=0.9;audio.volume=0.9;renderList(filtered);
+
+/* --- DOM --- */
+const songsEl=document.getElementById('songs'),
+      audio=document.getElementById('audio'),
+      nowTitle=document.getElementById('nowTitle'),
+      nowArtist=document.getElementById('nowArtist'),
+      cover=document.getElementById('cover'),
+      playBtn=document.getElementById('play'),
+      prevBtn=document.getElementById('prev'),
+      nextBtn=document.getElementById('next'),
+      seek=document.getElementById('seek'),
+      curTime=document.getElementById('curTime'),
+      dur=document.getElementById('dur'),
+      volume=document.getElementById('volume'),
+      search=document.getElementById('search'),
+      shuffleBtn=document.getElementById('shuffle'),
+      downloadAll=document.getElementById('downloadAll'),
+      selectAllBtn=document.getElementById('selectAllBtn'),
+      createFromSelectedBtn=document.getElementById('createPlaylistFromSelected'),
+      newPlaylistNameInput=document.getElementById('newPlaylistName'),
+      playlistsContainer=document.getElementById('playlistsContainer'),
+      nowCount=document.getElementById('nowCount'),
+      nowListPreview=document.getElementById('nowListPreview'),
+      newPlaylistBtn=document.getElementById('newPlaylistBtn');
+
+let currentIndex=-1;
+let filtered=SONGS.slice();
+let playlists = loadPlaylists(); // {name: string, ids: [songId,...], id: timestamp}
+let queue = []; // current play queue (array of song objects)
+let playingPlaylistId = null;
+
+/* --- Utilities --- */
+function savePlaylists(){ localStorage.setItem('playlists_v1', JSON.stringify(playlists)); }
+function loadPlaylists(){ try{ return JSON.parse(localStorage.getItem('playlists_v1'))||[] }catch(e){return[]} }
+function secsToTime(s){ s=Math.floor(s||0); return `${Math.floor(s/60)}:${(s%60).toString().padStart(2,'0')}`; }
+
+/* --- Render songs list (with checkboxes & add buttons) --- */
+function renderList(list){
+  songsEl.innerHTML='';
+  if(list.length===0){ songsEl.innerHTML='<div class="empty">No songs found</div>'; return; }
+  list.forEach((song,i)=>{
+    const el=document.createElement('div');
+    el.className='song';
+    el.innerHTML=`
+      <input type="checkbox" data-id="${song.id}" class="selCheckbox" />
+      <div class="idx">${i+1}</div>
+      <div class="title">
+        <div style="font-weight:600">${song.title}</div>
+        <div style="font-size:13px;color:var(--muted)">${song.artist}</div>
+      </div>
+      <div class="actions">
+        <button class="btn small" onclick="playById(${song.id})">Play</button>
+        <button class="btn small" onclick="showAddToMenu(${song.id}, this)">Add ➕</button>
+        <a class="btn small" href="${song.src}" download>Download</a>
+      </div>
+    `;
+    songsEl.appendChild(el);
+  });
+}
+
+/* --- Play logic --- */
+function loadSongByIndex(i){
+  if(i<0 || i>=queue.length) return;
+  const s = queue[i];
+  audio.src = s.src;
+  nowTitle.textContent = s.title;
+  nowArtist.textContent = s.artist;
+  cover.style.backgroundImage = s.cover ? `url(${s.cover})` : '';
+  cover.textContent = s.cover ? '' : '🎵';
+  currentIndex = i;
+  updateNowPreview();
+}
+function playById(id){
+  // set queue to filtered list by default, but prefer existing queue if current source in queue
+  if(queue.length===0){
+    queue = filtered.slice(); // copy objects from filtered (which are SONGS subset)
+  }
+  const idx = queue.findIndex(s=>s.id===id);
+  if(idx===-1){
+    // push this single song and play
+    const s = SONGS.find(x=>x.id===id);
+    queue = [s];
+    playingPlaylistId = null;
+    updateNowPreview();
+    loadSongByIndex(0);
+  } else {
+    loadSongByIndex(idx);
+  }
+  audio.play();
+}
+window.playById = playById;
+
+playBtn.onclick = ()=>{
+  if(!audio.src){
+    if(queue.length===0 && filtered.length) { queue = filtered.slice(); loadSongByIndex(0); }
+    else if(queue.length) loadSongByIndex(0);
+  }
+  audio.paused ? audio.play() : audio.pause();
+};
+prevBtn.onclick = ()=>{ if(currentIndex>0) loadSongByIndex(currentIndex-1); else loadSongByIndex(queue.length-1); audio.play(); };
+nextBtn.onclick = ()=>{ if(currentIndex<queue.length-1) loadSongByIndex(currentIndex+1); else loadSongByIndex(0); audio.play(); };
+audio.onplay=()=>playBtn.textContent='Pause';
+audio.onpause=()=>playBtn.textContent='Play';
+audio.ontimeupdate=()=>{ if(audio.duration){ seek.max=Math.floor(audio.duration); seek.value=Math.floor(audio.currentTime); curTime.textContent=secsToTime(audio.currentTime); dur.textContent=secsToTime(audio.duration); } };
+audio.onended=()=>{ if(currentIndex<queue.length-1){ loadSongByIndex(currentIndex+1); audio.play(); } else { audio.pause(); } };
+seek.oninput=()=>audio.currentTime=seek.value;
+volume.oninput=()=>audio.volume=volume.value;
+volume.value=0.9;audio.volume=0.9;
+
+/* --- Search, shuffle, download --- */
+search.oninput=()=>{ const q=search.value.toLowerCase(); filtered = SONGS.filter(s=>s.title.toLowerCase().includes(q)||s.artist.toLowerCase().includes(q)); renderList(filtered); };
+shuffleBtn.onclick=()=>{ for(let i=filtered.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [filtered[i],filtered[j]]=[filtered[j],filtered[i]] } renderList(filtered); };
+downloadAll.onclick=()=>filtered.forEach(s=>{ const a=document.createElement('a'); a.href=s.src; a.download=''; a.click(); });
+
+/* --- Selection & create playlist --- */
+selectAllBtn.onclick=()=>{
+  const boxes = Array.from(document.querySelectorAll('.selCheckbox'));
+  const allChecked = boxes.every(b=>b.checked);
+  boxes.forEach(b=>b.checked = !allChecked);
+};
+createFromSelectedBtn.onclick=()=>{
+  const name = (newPlaylistNameInput.value||prompt('Playlist name'))?.trim();
+  if(!name) return alert('Playlist name required');
+  const ids = Array.from(document.querySelectorAll('.selCheckbox:checked')).map(cb=>parseInt(cb.dataset.id));
+  if(ids.length===0) return alert('Select at least one song to create playlist');
+  const playlist = { id: Date.now(), name, ids };
+  playlists.push(playlist);
+  savePlaylists(); renderPlaylists(); newPlaylistNameInput.value='';
+  alert(`Playlist "${name}" created (${ids.length} songs)`);
+};
+
+/* --- Playlists UI --- */
+function renderPlaylists(){
+  playlistsContainer.innerHTML = '';
+  if(playlists.length===0){ playlistsContainer.innerHTML = '<div class="empty">No playlists yet</div>'; return; }
+  playlists.slice().reverse().forEach(pl=>{
+    const el = document.createElement('div');
+    el.className = 'playlist-item';
+    el.innerHTML = `
+      <div style="display:flex;align-items:center">
+        <button class="btn small" onclick="playPlaylist(${pl.id})">Play</button>
+        <div class="meta">
+          <div style="font-weight:600">${pl.name}</div>
+          <div style="font-size:12px;color:var(--muted)">${pl.ids.length} songs</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <button class="btn small" onclick="viewPlaylist(${pl.id})">View</button>
+        <button class="btn small" onclick="deletePlaylist(${pl.id})">Delete</button>
+      </div>
+    `;
+    playlistsContainer.appendChild(el);
+  });
+}
+window.playPlaylist = function(plId){
+  const pl = playlists.find(p=>p.id===plId);
+  if(!pl) return alert('Playlist not found');
+  queue = pl.ids.map(id=>SONGS.find(s=>s.id===id)).filter(Boolean);
+  playingPlaylistId = plId;
+  nowCount.textContent = queue.length;
+  updateNowPreview();
+  if(queue.length) { loadSongByIndex(0); audio.play(); }
+};
+window.viewPlaylist = function(plId){
+  const pl = playlists.find(p=>p.id===plId);
+  if(!pl) return alert('Playlist not found');
+  // render playlist songs in modal-like simple view: replace songs list temporarily
+  const prevFiltered = filtered.slice();
+  const plSongs = pl.ids.map(id=>SONGS.find(s=>s.id===id)).filter(Boolean);
+  filtered = plSongs;
+  renderList(filtered);
+  // attach small controls to remove song or add to playlist etc by altering the Add button behavior:
+  // we will augment song action buttons so they can remove from this playlist
+  // add a back button
+  const backBtn = document.createElement('div');
+  backBtn.style.marginTop = '8px';
+  backBtn.innerHTML = `<button class="btn small" id="backToAll">← Back to all</button>
+    <span style="margin-left:8px;color:var(--muted)">${pl.name}</span>
+    <button class="btn small" id="exportPl" style="margin-left:8px">Export</button>`;
+  songsEl.parentNode.insertBefore(backBtn, songsEl);
+  document.getElementById('backToAll').onclick = ()=>{ filtered = SONGS.slice(); renderList(filtered); backBtn.remove(); };
+  document.getElementById('exportPl').onclick = ()=>{ const txt = JSON.stringify(pl); navigator.clipboard?.writeText(txt); alert('Playlist JSON copied to clipboard'); };
+  // modify Add button to show remove option when viewing playlist
+  setTimeout(()=>{ // small delay for elements to exist
+    document.querySelectorAll('.song').forEach(el=>{
+      const addBtn = el.querySelector('button[onclick^="showAddToMenu"]');
+      if(!addBtn) return;
+      const songId = parseInt(el.querySelector('.selCheckbox').dataset.id);
+      addBtn.textContent = 'Remove ➖';
+      addBtn.onclick = ()=>{ removeSongFromPlaylist(plId, songId); el.remove(); };
+    });
+  },50);
+};
+
+window.deletePlaylist = function(plId){
+  if(!confirm('Delete this playlist?')) return;
+  playlists = playlists.filter(p=>p.id!==plId);
+  savePlaylists(); renderPlaylists();
+};
+
+/* --- Add to playlist menu --- */
+function showAddToMenu(songId, btnEl){
+  // simple prompt to choose playlist or create new
+  if(playlists.length===0){
+    const name = prompt('No playlists yet. Enter playlist name to create:');
+    if(!name) return;
+    const pl = { id: Date.now(), name: name.trim(), ids: [songId] };
+    playlists.push(pl); savePlaylists(); renderPlaylists(); alert(`Added to "${pl.name}"`);
+    return;
+  }
+  let menu = 'Choose playlist number to add:\n';
+  playlists.forEach((p,i)=> menu += `${i+1}: ${p.name} (${p.ids.length})\n`);
+  menu += `${playlists.length+1}: Create new playlist`;
+  const choice = parseInt(prompt(menu));
+  if(!choice) return;
+  if(choice === playlists.length+1){
+    const name = prompt('New playlist name:');
+    if(!name) return;
+    const pl = { id: Date.now(), name: name.trim(), ids: [songId] };
+    playlists.push(pl); savePlaylists(); renderPlaylists(); alert(`Created "${pl.name}" and added song`);
+    return;
+  }
+  const pl = playlists[choice-1];
+  if(!pl) return alert('Invalid choice');
+  if(!pl.ids.includes(songId)) pl.ids.push(songId);
+  savePlaylists(); renderPlaylists();
+  alert(`Added to "${pl.name}"`);
+}
+window.showAddToMenu = showAddToMenu;
+
+/* --- Remove song from playlist --- */
+function removeSongFromPlaylist(plId, songId){
+  const pl = playlists.find(p=>p.id===plId);
+  if(!pl) return;
+  pl.ids = pl.ids.filter(id=>id!==songId);
+  savePlaylists(); renderPlaylists();
+}
+
+/* --- Now preview update --- */
+function updateNowPreview(){
+  nowCount.textContent = queue.length || 0;
+  if(queue.length===0){ nowListPreview.className='caption empty'; nowListPreview.textContent='No song queued'; return; }
+  nowListPreview.className='caption';
+  nowListPreview.innerHTML = queue.slice(0,5).map(s=>`• ${s.title}`).join('<br>') + (queue.length>5?`<div style="margin-top:6px;color:var(--muted)">and ${queue.length-5} more...</div>`:'');
+}
+
+/* --- Quick new playlist button (empty) --- */
+newPlaylistBtn.onclick = ()=>{
+  const name = prompt('New playlist name:');
+  if(!name) return;
+  const pl = { id: Date.now(), name: name.trim(), ids: [] };
+  playlists.push(pl); savePlaylists(); renderPlaylists();
+};
+
+/* --- Initialization --- */
+filtered = SONGS.slice();
+renderList(filtered);
+renderPlaylists();
+updateNowPreview();
+
+/* --- Expose removeSongFromPlaylist for debugging if needed --- */
+window.removeSongFromPlaylist = removeSongFromPlaylist;
+
 </script>
 </body>
 </html>
